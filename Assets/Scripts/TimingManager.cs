@@ -10,7 +10,9 @@ public class TimingManager : MonoBehaviour {
 	public GameObject resetWindow;
 	public InputField resetField;
 	public Text resetDays;
+	public Toggle useToday;
 	public Text daysValue;
+	public Toggle useDebugValue;
 	DateTime startTime;
 
 	void Start () {
@@ -23,19 +25,20 @@ public class TimingManager : MonoBehaviour {
 
 	void Update() {
 		//Update days value
-		daysValue.text = GetDaysDebug ().ToString ();
+		daysValue.text = (useDebugValue.isOn) ? GetDaysDebug ().ToString () : GetDays ().ToString ();
 	}
 
 	double GetDaysDebug(){
 		//Debug value of get days
-		TimeSpan elapsed = DateTime.UtcNow - startTime;
+		TimeSpan elapsed = DateTime.Now - startTime;
 		double days = Math.Round (elapsed.TotalDays, 5);
 		return days;
 	}
 
-	void SetTime(int days = 0){
+	void SetTime(int days = 0, bool today = false){
 		//Set the starting time with initial days value
-		startTime = DateTime.UtcNow;
+		startTime = (today) ? DateTime.Today : DateTime.Now;
+		Debug.Log (startTime.ToString ());
 		if (days != 0)
 			startTime = startTime.AddDays (Convert.ToDouble (-days));
 		Save ();
@@ -43,14 +46,14 @@ public class TimingManager : MonoBehaviour {
 
 	int GetDays(){
 		//Return number of days elapsed since start time
-		TimeSpan elapsed = DateTime.UtcNow - startTime;
+		TimeSpan elapsed = DateTime.Now - startTime;
 		return elapsed.Days;
 	}
 
 	void Save(){
 		//Save data to file
 		BinaryFormatter bf = new BinaryFormatter ();
-		FileStream file = File.Create (Application.persistentDataPath + "/persistentData.dat");
+		FileStream file = File.Create (Application.persistentDataPath + "/playerData.dat");
 		GameData data = new GameData ();
 		data.startTime = startTime;
 		bf.Serialize (file, data);
@@ -75,6 +78,7 @@ public class TimingManager : MonoBehaviour {
 	public void DisplayResetWindow(){
 		//Pop up reset time window
 		resetField.text = "0";
+		useToday.isOn = true;
 		resetWindow.SetActive (true);
 	}
 
@@ -84,7 +88,7 @@ public class TimingManager : MonoBehaviour {
 			int days;
 			int.TryParse (resetDays.text, out days);
 			Debug.Log ("Days: " + days.ToString ());
-			SetTime (days);
+			SetTime (days, useToday.isOn);
 		}
 		resetWindow.SetActive (false);
 	}
